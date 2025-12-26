@@ -1,11 +1,12 @@
 # PhotoDisposeSystem - Smart Image Processing Platform
 
-本项目为“Smart Image Processing Platform”课程项目的 Spring Boot 实现版本，采用前后端分离架构设计，后端提供 REST API。AI 推理服务默认通过 HTTP 调用（不在本项目内实现）。
+本项目为“Smart Image Processing Platform”课程项目的 Spring Boot + Vue 3 实现版本，采用前后端分离架构设计，后端提供 REST API，前端提供交互演示界面。AI 推理服务默认通过 HTTP 调用（不在本项目内实现）。
 
 ## 技术栈
 - **后端**：Spring Boot 3 (Java 17)
+- **前端**：Vue 3 + Vite
 - **数据库**：H2 内存数据库
-- **架构**：REST API + 前端独立部署（未包含在本仓库）
+- **架构**：REST API + 前端独立部署
 
 ## 预设账号
 系统启动时会自动注入以下账号（密码均为 `password123`）：
@@ -14,11 +15,21 @@
 - `student_c` (MEMBER)
 
 ## 本地运行
+### 后端启动
 ```bash
 mvn spring-boot:run
 ```
 
 默认端口：`http://localhost:8080`
+
+### 前端启动
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+默认访问地址：`http://localhost:5173`
 
 ## H2 控制台
 - 地址：`http://localhost:8080/h2-console`
@@ -82,5 +93,5 @@ app:
 AI 服务不可用时，系统会返回可读的错误信息，不会导致整体流程崩溃。
 
 ## 说明
-- 本项目仅提供后端 REST API 示例，不包含前端实现。
+- 本项目提供前后端示例实现，可用于课程演示和二次开发。
 - AI 推理服务默认模拟调用，**不实现模型本体**。

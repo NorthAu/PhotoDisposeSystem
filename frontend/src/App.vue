@@ -1,7 +1,7 @@
 <template>
   <div class="app">
     <header class="header">
-      <div>
+      <div class="title">
         <h1>Smart Image Processing Platform</h1>
         <p class="subtitle">Vue 3 前端演示，连接 Spring Boot REST API</p>
       </div>
@@ -13,110 +13,114 @@
       </div>
     </header>
 
-    <main class="grid">
-      <section class="card">
-        <h2>账号登录 / 注册</h2>
-        <form @submit.prevent="handleLogin">
-          <label>
-            用户名
-            <input v-model="authForm.username" placeholder="student_a" required />
-          </label>
-          <label>
-            密码
-            <input v-model="authForm.password" type="password" placeholder="password123" required />
-          </label>
-          <div class="row">
-            <button type="submit">登录</button>
-            <button type="button" class="secondary" @click="handleRegister">注册</button>
+    <div class="content">
+      <aside class="sidebar">
+        <section class="card">
+          <h2>账号登录 / 注册</h2>
+          <form @submit.prevent="handleLogin">
+            <label>
+              用户名
+              <input v-model="authForm.username" placeholder="student_a" required />
+            </label>
+            <label>
+              密码
+              <input v-model="authForm.password" type="password" placeholder="password123" required />
+            </label>
+            <div class="row">
+              <button type="submit">登录</button>
+              <button type="button" class="secondary" @click="handleRegister">注册</button>
+            </div>
+          </form>
+          <p class="hint">提示：可使用预设账号 student_a / student_b / student_c</p>
+        </section>
+
+        <section class="card compact">
+          <h2>操作日志</h2>
+          <div v-if="logs.length === 0" class="hint">暂无日志。</div>
+          <ul v-else class="list">
+            <li v-for="(log, index) in logs" :key="index">
+              {{ log }}
+            </li>
+          </ul>
+        </section>
+      </aside>
+
+      <main class="grid">
+        <section class="card">
+          <h2>图片上传与管理</h2>
+          <form @submit.prevent="handleUpload">
+            <label>
+              选择图片 (JPG/PNG, &lt;10MB)
+              <input type="file" accept="image/png, image/jpeg" @change="handleFileChange" />
+            </label>
+            <button type="submit" :disabled="!selectedFile || !user">上传</button>
+          </form>
+          <div class="row between">
+            <h3>我的图片</h3>
+            <button class="secondary" @click="fetchImages" :disabled="!user">刷新</button>
           </div>
-        </form>
-        <p class="hint">提示：可使用预设账号 student_a / student_b / student_c</p>
-      </section>
+          <div v-if="images.length === 0" class="hint">暂无图片，请先上传。</div>
+          <ul v-else class="list">
+            <li v-for="image in images" :key="image.id">
+              <div>
+                <strong>{{ image.filename }}</strong>
+                <div class="meta">{{ image.contentType }} · {{ formatSize(image.size) }}</div>
+              </div>
+              <button class="ghost" @click="downloadImage(image.id)">下载</button>
+            </li>
+          </ul>
+        </section>
 
-      <section class="card">
-        <h2>图片上传与管理</h2>
-        <form @submit.prevent="handleUpload">
+        <section class="card highlight">
+          <h2>AI 功能演示</h2>
           <label>
-            选择图片 (JPG/PNG, &lt;10MB)
-            <input type="file" accept="image/png, image/jpeg" @change="handleFileChange" />
+            选择图片
+            <select v-model="selectedImageId">
+              <option disabled value="">请选择</option>
+              <option v-for="image in images" :key="image.id" :value="image.id">
+                {{ image.filename }}
+              </option>
+            </select>
           </label>
-          <button type="submit" :disabled="!selectedFile || !user">上传</button>
-        </form>
-        <div class="row between">
-          <h3>我的图片</h3>
-          <button class="secondary" @click="fetchImages" :disabled="!user">刷新</button>
-        </div>
-        <div v-if="images.length === 0" class="hint">暂无图片，请先上传。</div>
-        <ul v-else class="list">
-          <li v-for="image in images" :key="image.id">
-            <div>
-              <strong>{{ image.filename }}</strong>
-              <div class="meta">{{ image.contentType }} · {{ formatSize(image.size) }}</div>
-            </div>
-            <button class="ghost" @click="downloadImage(image.id)">下载</button>
-          </li>
-        </ul>
-      </section>
+          <label>
+            风格 / 模板 / 格式
+            <input v-model="taskOption" placeholder="例如：van-gogh / studio / png" />
+          </label>
+          <div class="row wrap">
+            <button @click="runTask('enhance')" :disabled="!canRunTask">一键增强</button>
+            <button @click="runTask('style-transfer')" :disabled="!canRunTask">风格迁移</button>
+            <button @click="runTask('background-replace')" :disabled="!canRunTask">背景替换</button>
+            <button @click="runTask('compress')" :disabled="!canRunTask">压缩</button>
+            <button @click="runTask('convert')" :disabled="!canRunTask">格式转换</button>
+          </div>
+          <div class="hint">AI 接口为示例调用，服务不可用时会返回错误信息。</div>
+        </section>
 
-      <section class="card">
-        <h2>AI 功能演示</h2>
-        <label>
-          选择图片
-          <select v-model="selectedImageId">
-            <option disabled value="">请选择</option>
-            <option v-for="image in images" :key="image.id" :value="image.id">
-              {{ image.filename }}
-            </option>
-          </select>
-        </label>
-        <label>
-          风格 / 模板 / 格式
-          <input v-model="taskOption" placeholder="例如：van-gogh / studio / png" />
-        </label>
-        <div class="row wrap">
-          <button @click="runTask('enhance')" :disabled="!canRunTask">一键增强</button>
-          <button @click="runTask('style-transfer')" :disabled="!canRunTask">风格迁移</button>
-          <button @click="runTask('background-replace')" :disabled="!canRunTask">背景替换</button>
-          <button @click="runTask('compress')" :disabled="!canRunTask">压缩</button>
-          <button @click="runTask('convert')" :disabled="!canRunTask">格式转换</button>
-        </div>
-        <div class="hint">AI 接口为示例调用，服务不可用时会返回错误信息。</div>
-      </section>
+        <section class="card">
+          <h2>任务历史记录</h2>
+          <div class="row between">
+            <span>任务总数：{{ tasks.length }}</span>
+            <button class="secondary" @click="fetchTasks" :disabled="!user">刷新</button>
+          </div>
+          <div v-if="tasks.length === 0" class="hint">暂无任务记录。</div>
+          <ul v-else class="list">
+            <li v-for="task in tasks" :key="task.taskId">
+              <div>
+                <strong>{{ task.taskType }}</strong>
+                <div class="meta">状态：{{ task.status }} · {{ formatDate(task.createdAt) }}</div>
+                <div class="meta">{{ task.message }}</div>
+              </div>
+            </li>
+          </ul>
+        </section>
 
-      <section class="card">
-        <h2>任务历史记录</h2>
-        <div class="row between">
-          <span>任务总数：{{ tasks.length }}</span>
-          <button class="secondary" @click="fetchTasks" :disabled="!user">刷新</button>
-        </div>
-        <div v-if="tasks.length === 0" class="hint">暂无任务记录。</div>
-        <ul v-else class="list">
-          <li v-for="task in tasks" :key="task.taskId">
-            <div>
-              <strong>{{ task.taskType }}</strong>
-              <div class="meta">状态：{{ task.status }} · {{ formatDate(task.createdAt) }}</div>
-              <div class="meta">{{ task.message }}</div>
-            </div>
-          </li>
-        </ul>
-      </section>
-
-      <section class="card">
-        <h2>批处理示例</h2>
-        <p class="hint">基于当前用户与已上传图片演示批处理任务。</p>
-        <button @click="runBatch" :disabled="!canRunTask || images.length < 2">提交批处理</button>
-      </section>
-    </main>
-
-    <section class="card log">
-      <h2>操作日志</h2>
-      <div v-if="logs.length === 0" class="hint">暂无日志。</div>
-      <ul v-else class="list">
-        <li v-for="(log, index) in logs" :key="index">
-          {{ log }}
-        </li>
-      </ul>
-    </section>
+        <section class="card">
+          <h2>批处理示例</h2>
+          <p class="hint">基于当前用户与已上传图片演示批处理任务。</p>
+          <button @click="runBatch" :disabled="!canRunTask || images.length < 2">提交批处理</button>
+        </section>
+      </main>
+    </div>
   </div>
 </template>
 
@@ -320,7 +324,7 @@ const formatDate = (value) => {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #1f2933;
   padding: 32px;
-  background: #f6f8fb;
+  background: #f2f5fb;
   min-height: 100vh;
 }
 
@@ -338,6 +342,10 @@ const formatDate = (value) => {
   margin-top: 4px;
 }
 
+.title h1 {
+  margin-bottom: 6px;
+}
+
 .user-status {
   display: flex;
   gap: 12px;
@@ -351,6 +359,22 @@ const formatDate = (value) => {
   font-size: 0.9rem;
 }
 
+.content {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 20px;
+  height: fit-content;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -362,6 +386,16 @@ const formatDate = (value) => {
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+.card.compact {
+  max-height: 360px;
+  overflow: auto;
+}
+
+.card.highlight {
+  border: 1px solid #d7e2ff;
+  background: linear-gradient(135deg, #f7f9ff 0%, #ffffff 70%);
 }
 
 .card h2 {
@@ -451,7 +485,13 @@ button:disabled {
   color: #7b8794;
 }
 
-.log {
-  margin-top: 24px;
+@media (max-width: 900px) {
+  .content {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
 }
 </style>
